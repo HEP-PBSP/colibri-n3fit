@@ -10,3 +10,14 @@ To use a different environment name, one should do
 ```
 conda env create -n myenv -f environment.yml
 ```
+
+## To Run
+Note that this doesn't currently run fully but this is just a rough draft!
+
+```
+pip install -e .
+```
+
+```
+example_pdf_model example_pdf_model/runcards/example_pdf_fit.yaml
+```
