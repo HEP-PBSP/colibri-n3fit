@@ -15,9 +15,8 @@ class N3FitPDFModel(PDFModel):
 
     def __init__(
         self,
-        fitted_flavours,
         flav_info: list = FLAV_INFO_NNPDF40,
-        replica_range_settings: dict = {"min_replica": 1, "max_replica": 3},
+        replica_range_settings: dict = {"min_replica": 1, "max_replica": 1},
         impose_sumrule: bool = True,
         fitbasis: str = "EVOL",
         nodes: list = [25, 20, 8],
@@ -28,11 +27,9 @@ class N3FitPDFModel(PDFModel):
     ):
         """
         Args:
-            fitted_flavours: List of flavours to fit
             **kwargs: Arguments for n3fit model configuration
                       (nodes, activations, initializer_name, etc.)
         """
-        self.fitted_flavours = fitted_flavours
         self.model_kwargs = kwargs
         
         self.n3fit_model = pdfNN_layer_generator(
@@ -82,22 +79,11 @@ class N3FitPDFModel(PDFModel):
          
             pdf_output = tf.squeeze(self.n3fit_model(input_dict), axis=0)  
            
-            pdf_array = np.array(tf.transpose(pdf_output, perm=[0, 2, 1]))  
-            
-            result = []
-            for fl in convolution.FK_FLAVOURS:
-                if fl in self.fitted_flavours:
-                    print(f"Flavour {fl} found in fitted flavours.")
-                    fl_idx = self.fitted_flavours.index(fl)
-                    result.append(pdf_array[0][fl_idx]) # Only getting replica 0
-                else:
-                    print(f"Flavour {fl} not in fitted flavours, appending zeros.")
-                    result.append(np.zeros_like(xgrid))
-                
-            for element in result:
-                print(f"Element shape: {element.shape}")
+            pdf_array = tf.transpose(pdf_output, perm=[0, 2, 1]) 
+
+            pdf_array = tf.squeeze(pdf_array, axis=0)
     
-            return jnp.array(result)  
+            return jnp.array(pdf_array)  
 
         return pdf_func
 
