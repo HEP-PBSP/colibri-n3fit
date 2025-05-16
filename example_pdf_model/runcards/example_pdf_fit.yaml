@@ -61,7 +61,7 @@ ns_settings:
     vectorized: False
     ndraw_max: 500
   Run_settings:
-    min_num_live_points: 400
+    min_num_live_points: 800
     min_ess: 50
     frac_remain: 0.1
   # SliceSampler_settings:
