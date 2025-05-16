@@ -2,7 +2,7 @@
 example_pdf_model.model.py
 
 """
-
+import jax
 import jax.numpy as jnp
 from colibri.pdf_model import PDFModel
 from validphys import convolution
@@ -52,6 +52,9 @@ class N3FitPDFModel(PDFModel):
             **kwargs
         )
         self.x_in = self.n3fit_model.x_in
+        self.static_weights = self.n3fit_model.get_weights()[:16]  #First 16 weights aren't trainable
+        self.modifiable_shapes = [w.shape for w in self.n3fit_model.get_weights()[16:]]
+        self.total_modifiable_params = sum(np.prod(s) for s in self.modifiable_shapes)
 
     @property
     def n_parameters(self):
@@ -61,6 +64,19 @@ class N3FitPDFModel(PDFModel):
     @property
     def param_names(self):
         return [f"w_{i}" for i in range(self.n_parameters)]
+
+    def update_weights(self, params_np):
+        """Update TF model weights (must be called outside JIT)"""
+        new_weights = []
+        param_pos = 0
+        for shape in self.modifiable_shapes:
+            size = np.prod(shape)
+            new_w = params_np[param_pos:param_pos+size].reshape(shape)
+            new_weights.append(new_w)
+            param_pos += size
+        updated_weights = self.static_weights + new_weights
+        self.n3fit_model.set_weights(updated_weights)
+
 
     def grid_values_func(self, xgrid):
         """
@@ -76,7 +92,11 @@ class N3FitPDFModel(PDFModel):
         }
 
         def pdf_func(_params):
-         
+
+            params_np = jax.device_get(_params)
+
+            self.update_weights(params_np) 
+
             pdf_output = tf.squeeze(self.n3fit_model(input_dict), axis=0)  
            
             pdf_array = tf.transpose(pdf_output, perm=[0, 2, 1]) 
@@ -84,50 +104,5 @@ class N3FitPDFModel(PDFModel):
             pdf_array = tf.squeeze(pdf_array, axis=0)
     
             return jnp.array(pdf_array)  
-
-        return pdf_func
-
-
-class ExamplePDFModel(PDFModel):
-    """ """
-
-    def __init__(self, fitted_flavours):
-        self.fitted_flavours = fitted_flavours
-
-    @property
-    def param_names(self):
-        """The fitted parameters of the model."""
-        return [
-            "alpha",
-            "beta",
-        ]
-
-    @property
-    def n_parameters(self):
-        """The number of parameters of the model."""
-        return len(self.param_names)
-
-    def _pdf(self, x, alpha, beta):
-        """ """
-        return x ** (1 - alpha) * (1 - x) ** beta
-
-    def grid_values_func(self, xgrid):
-        """This function should produce a grid values function, which takes
-        in the model parameters, and produces the PDF values on the grid xgrid.
-        """
-        xgrid = jnp.array(xgrid)
-
-        def pdf_func(params):
-            """ """
-            alpha = params[0]
-            beta = params[1]
-            pdf_grid = []
-            for fl in convolution.FK_FLAVOURS:
-                if fl in self.fitted_flavours:
-                    pdf_grid.append(self._pdf(xgrid, alpha, beta))
-                else:
-                    pdf_grid.append(jnp.zeros_like(xgrid))
-
-            return jnp.array(pdf_grid)
 
         return pdf_func
