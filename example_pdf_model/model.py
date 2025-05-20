@@ -10,6 +10,8 @@ from n3fit.model_gen import pdfNN_layer_generator
 import tensorflow as tf
 from example_pdf_model.utils import FLAV_INFO_NNPDF40
 import numpy as np
+import math
+from jax import lax
 
 class N3FitPDFModel(PDFModel):
 
@@ -65,8 +67,11 @@ class N3FitPDFModel(PDFModel):
     def param_names(self):
         return [f"w_{i}" for i in range(self.n_parameters)]
 
-    def update_weights(self, params_np):
+    def update_weights(self, params):
         """Update TF model weights (must be called outside JIT)"""
+        if hasattr(params, '_value'):  # Handle traced arrays
+            params = params._value
+        params_np = np.array(jax.device_get(params))
         new_weights = []
         param_pos = 0
         for shape in self.modifiable_shapes:
@@ -74,7 +79,9 @@ class N3FitPDFModel(PDFModel):
             new_w = params_np[param_pos:param_pos+size].reshape(shape)
             new_weights.append(new_w)
             param_pos += size
+
         updated_weights = self.static_weights + new_weights
+        # import IPython ; IPython.embed()
         self.n3fit_model.set_weights(updated_weights)
 
 
@@ -83,26 +90,47 @@ class N3FitPDFModel(PDFModel):
         Returns a function that computes the PDF values on xgrid.
         Maintains same input/output structure as n3fit_pdf_grid.
         """
-        print('Nparameters:', self.n_parameters)
-        xgrid_tensor = tf.convert_to_tensor(np.array(xgrid)[None, :, None], dtype=tf.float32)
+
+        xgrid_tensor =  jnp.array(xgrid)[None, :, None].astype(jnp.float32)
 
         input_dict = {
             "pdf_input": xgrid_tensor,
             "xgrid_integration": self.n3fit_model.x_in["xgrid_integration"]
         }
+        def unpack_params(flat_params):
+            shapes = [(2, 25), (25,), (25, 20), (20,), (20, 8), (8,)]
+            params_list = []
+            pos = 0
+            for shape in shapes:
+                size = math.prod(shape)
+                param = lax.dynamic_slice(flat_params, (pos,), (size,))
+                param = param.reshape(shape)
+                params_list.append(param)
+                pos += size   
+            return params_list
 
         def pdf_func(_params):
-
-            params_np = jax.device_get(_params)
-
-            self.update_weights(params_np) 
-
-            pdf_output = tf.squeeze(self.n3fit_model(input_dict), axis=0)  
+       
+            shapes = [v.shape for v in self.n3fit_model.trainable_variables]
+        
+            weights = unpack_params(_params)
            
-            pdf_array = tf.transpose(pdf_output, perm=[0, 2, 1]) 
+            nn_layer = self.n3fit_model.layers[4]
+      
+            print(self.n3fit_model.input_shape)
+            print(input_dict['pdf_input'].shape) # Check expected input shapes
+            print(input_dict['xgrid_integration'].shape)
+            nn_layer.set_weights(weights)
+           
+            model_output = self.n3fit_model(input_dict) #
 
-            pdf_array = tf.squeeze(pdf_array, axis=0)
+            pdf_output = jnp.squeeze(model_output, axis=0)
     
+            pdf_array = jnp.transpose(pdf_output, axes=(0, 2, 1))
+      
+            pdf_array = jnp.squeeze(pdf_array, axis=0)
+ 
+
             return jnp.array(pdf_array)  
 
         return pdf_func
