@@ -35,7 +35,7 @@ class ExampleConfig(colibriConfig):
         model = N3FitPDFModel(
             flav_info=FLAV_INFO_NNPDF40, 
             replica_range_settings={"min_replica": 1, "max_replica": 1},
-            impose_sumrule=True,
+            impose_sumrule=False,
             fitbasis="EVOL",
             nodes=[25, 20, 8],
             activations=["tanh", "tanh", "linear"],

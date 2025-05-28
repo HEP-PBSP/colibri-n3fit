@@ -19,7 +19,7 @@ class N3FitPDFModel(PDFModel):
         self,
         flav_info: list = FLAV_INFO_NNPDF40,
         replica_range_settings: dict = {"min_replica": 1, "max_replica": 1},
-        impose_sumrule: bool = True,
+        impose_sumrule: bool = False,
         fitbasis: str = "EVOL",
         nodes: list = [25, 20, 8],
         activations: list = ["tanh", "tanh", "linear"],
@@ -61,15 +61,14 @@ class N3FitPDFModel(PDFModel):
     @property
     def n_parameters(self):
         """Return total number of trainable parameters."""
-        return sum(tf.size(w).numpy() for w in self.n3fit_model.trainable_weights)
+        return sum(jnp.size(w) for w in self.n3fit_model.trainable_weights)
 
     @property
     def param_names(self):
         return [f"w_{i}" for i in range(self.n_parameters)]
 
     def update_weights(self, params):
-        """Update TF model weights (must be called outside JIT)"""
-        if hasattr(params, '_value'):  # Handle traced arrays
+        if hasattr(params, '_value'):  
             params = params._value
         params_np = np.array(jax.device_get(params))
         new_weights = []
@@ -81,7 +80,6 @@ class N3FitPDFModel(PDFModel):
             param_pos += size
 
         updated_weights = self.static_weights + new_weights
-        # import IPython ; IPython.embed()
         self.n3fit_model.set_weights(updated_weights)
 
 
@@ -92,13 +90,13 @@ class N3FitPDFModel(PDFModel):
         """
 
         xgrid_tensor =  jnp.array(xgrid)[None, :, None].astype(jnp.float32)
+        # xgrid_integration_jax = jnp.array(tf.convert_to_tensor(self.n3fit_model.x_in["xgrid_integration"]))
 
         input_dict = {
-            "pdf_input": xgrid_tensor,
-            "xgrid_integration": self.n3fit_model.x_in["xgrid_integration"]
+            "pdf_input": xgrid_tensor
         }
-        def unpack_params(flat_params):
-            shapes = [(2, 25), (25,), (25, 20), (20,), (20, 8), (8,)]
+
+        def unpack_params(flat_params, shapes):
             params_list = []
             pos = 0
             for shape in shapes:
@@ -110,19 +108,16 @@ class N3FitPDFModel(PDFModel):
             return params_list
 
         def pdf_func(_params):
-       
+            
             shapes = [v.shape for v in self.n3fit_model.trainable_variables]
         
-            weights = unpack_params(_params)
-           
-            nn_layer = self.n3fit_model.layers[4]
-      
-            print(self.n3fit_model.input_shape)
-            print(input_dict['pdf_input'].shape) # Check expected input shapes
-            print(input_dict['xgrid_integration'].shape)
+            weights = unpack_params(_params, shapes)
+    
+            nn_layer = self.n3fit_model.layers[3]
+
             nn_layer.set_weights(weights)
-           
-            model_output = self.n3fit_model(input_dict) #
+
+            model_output = self.n3fit_model(input_dict) 
 
             pdf_output = jnp.squeeze(model_output, axis=0)
     
