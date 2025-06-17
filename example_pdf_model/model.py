@@ -113,8 +113,8 @@ class N3FitPDFModel(PDFModel):
         
             weights = unpack_params(_params, shapes)
     
-            nn_layer = self.n3fit_model.layers[3]
-
+            nn_layer = self.n3fit_model.layers[3] #Change if sum rules
+            
             nn_layer.set_weights(weights)
 
             model_output = self.n3fit_model(input_dict) 
