@@ -6,7 +6,7 @@ import jax
 import jax.numpy as jnp
 from colibri.pdf_model import PDFModel
 from validphys import convolution
-from n3fit.model_gen import pdfNN_layer_generator
+from n3fit.model_gen import _pdfNN_layer_generator, ReplicaSettings
 import tensorflow as tf
 from example_pdf_model.utils import FLAV_INFO_NNPDF40
 import numpy as np
@@ -19,7 +19,7 @@ class N3FitPDFModel(PDFModel):
         self,
         flav_info: list = FLAV_INFO_NNPDF40,
         replica_range_settings: dict = {"min_replica": 1, "max_replica": 1},
-        impose_sumrule: bool = False,
+        impose_sumrule: bool = True,
         fitbasis: str = "EVOL",
         nodes: list = [25, 20, 8],
         activations: list = ["tanh", "tanh", "linear"],
@@ -34,23 +34,12 @@ class N3FitPDFModel(PDFModel):
         """
         self.model_kwargs = kwargs
         
-        self.n3fit_model = pdfNN_layer_generator(
-            nodes=nodes,
-            activations=activations,
-            initializer_name=initializer_name,
-            layer_type=layer_type,
-            seed=range(
-                replica_range_settings["min_replica"],
-                replica_range_settings["max_replica"] + 1,
-            ),
+        self.n3fit_model = _pdfNN_layer_generator(
+            [ReplicaSettings(nodes=nodes, activations=activations,seed=i) for i in range(replica_range_settings["min_replica"],
+                replica_range_settings["max_replica"] + 1)],
             impose_sumrule=impose_sumrule,
             flav_info=flav_info,
             fitbasis=fitbasis,
-            num_replicas=(
-                replica_range_settings["max_replica"] 
-                - replica_range_settings["min_replica"] 
-                + 1
-            ),
             **kwargs
         )
         self.x_in = self.n3fit_model.x_in
@@ -90,10 +79,11 @@ class N3FitPDFModel(PDFModel):
         """
 
         xgrid_tensor =  jnp.array(xgrid)[None, :, None].astype(jnp.float32)
-        # xgrid_integration_jax = jnp.array(tf.convert_to_tensor(self.n3fit_model.x_in["xgrid_integration"]))
-
+        xgrid_integration_jax = jnp.array(tf.convert_to_tensor(self.n3fit_model.x_in["xgrid_integration"])) #Should be just x_in["xgrid_integration"]
+       
         input_dict = {
-            "pdf_input": xgrid_tensor
+            "pdf_input": xgrid_tensor,
+            "xgrid_integration": xgrid_integration_jax,
         }
 
         def unpack_params(flat_params, shapes):
@@ -112,11 +102,11 @@ class N3FitPDFModel(PDFModel):
             shapes = [v.shape for v in self.n3fit_model.trainable_variables]
         
             weights = unpack_params(_params, shapes)
-    
-            nn_layer = self.n3fit_model.layers[3] #Change if sum rules
+
+            nn_layer = self.n3fit_model.layers[4] #Change (if sum rules [4], if not [3])
             
             nn_layer.set_weights(weights)
-
+            
             model_output = self.n3fit_model(input_dict) 
 
             pdf_output = jnp.squeeze(model_output, axis=0)
@@ -125,7 +115,6 @@ class N3FitPDFModel(PDFModel):
       
             pdf_array = jnp.squeeze(pdf_array, axis=0)
  
-
             return jnp.array(pdf_array)  
 
         return pdf_func
