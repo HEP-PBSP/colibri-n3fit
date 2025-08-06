@@ -56,22 +56,6 @@ class N3FitPDFModel(PDFModel):
     def param_names(self):
         return [f"w_{i}" for i in range(self.n_parameters)]
 
-    def update_weights(self, params):
-        if hasattr(params, '_value'):  
-            params = params._value
-        params_np = np.array(jax.device_get(params))
-        new_weights = []
-        param_pos = 0
-        for shape in self.modifiable_shapes:
-            size = np.prod(shape)
-            new_w = params_np[param_pos:param_pos+size].reshape(shape)
-            new_weights.append(new_w)
-            param_pos += size
-
-        updated_weights = self.static_weights + new_weights
-        self.n3fit_model.set_weights(updated_weights)
-
-
     def grid_values_func(self, xgrid):
         """
         Returns a function that computes the PDF values on xgrid.
@@ -79,7 +63,7 @@ class N3FitPDFModel(PDFModel):
         """
 
         xgrid_tensor =  jnp.array(xgrid)[None, :, None].astype(jnp.float32)
-        xgrid_integration_jax = jnp.array(tf.convert_to_tensor(self.n3fit_model.x_in["xgrid_integration"])) #Should be just x_in["xgrid_integration"]
+        xgrid_integration_jax = jnp.array(tf.convert_to_tensor(self.n3fit_model.x_in["xgrid_integration"])) 
        
         input_dict = {
             "pdf_input": xgrid_tensor,
@@ -87,6 +71,7 @@ class N3FitPDFModel(PDFModel):
         }
 
         def unpack_params(flat_params, shapes):
+            """ Returns the weight parameters in the format expected by the n3fit model. """
             params_list = []
             pos = 0
             for shape in shapes:
@@ -99,14 +84,17 @@ class N3FitPDFModel(PDFModel):
 
         def pdf_func(_params):
             
+            # Retrive the shapes of the trainable variables
             shapes = [v.shape for v in self.n3fit_model.trainable_variables]
         
             weights = unpack_params(_params, shapes)
 
             nn_layer = self.n3fit_model.layers[4] # Change (if sum rules [4], if not [3])
-    
-            weights_new = [w+np.random.normal(0, 0.000001, size=w.shape) for w in weights] #Add small noise to avoid numerical issues
 
+            # Add small noise to avoid numerical issues with zero weights
+            weights_new = [w+np.random.normal(0, 0.000001, size=w.shape) for w in weights] 
+
+            # Set the weights of the layer
             nn_layer.set_weights(weights_new)
             
             model_output = self.n3fit_model(input_dict) 

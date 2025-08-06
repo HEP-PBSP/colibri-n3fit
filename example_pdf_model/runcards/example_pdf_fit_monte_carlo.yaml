@@ -50,28 +50,28 @@ flavour_mapping: [V, V3, V8, T3, T8]
 ###################
 # Methodology specs
 ###################
-prior_settings:
-  prior_distribution: uniform_parameter_prior
-  prior_distribution_specs:
-    max_val: 3.4
-    min_val: 0.0
+# prior_settings:
+#   prior_distribution: uniform_parameter_prior
+#   prior_distribution_specs:
+#     max_val: 3.4
+#     min_val: 0.0
 
-integrability_settings:
-  integrability: false  
+# integrability_settings:
+#   integrability: false  
   
-# Nested Sampling settings
-ns_settings:
-  sampler_plot: true
-  n_posterior_samples: 10
-  ReactiveNS_settings:
-    vectorized: False
-    ndraw_max: 500
-  Run_settings:
-    min_num_live_points: 800
-    min_ess: 50
-    frac_remain: 0.1
-  # SliceSampler_settings:
-  #   nsteps: 106
+# # Nested Sampling settings
+# ns_settings:
+#   sampler_plot: true
+#   n_posterior_samples: 10
+#   ReactiveNS_settings:
+#     vectorized: False
+#     ndraw_max: 500
+#   Run_settings:
+#     min_num_live_points: 800
+#     min_ess: 50
+#     frac_remain: 0.1
+#   # SliceSampler_settings:
+#   #   nsteps: 106
 
 # Monte Carlo settings
 use_gen_t0: True                       # Whether the t0 covariance is used to generated pseudodata.
@@ -79,7 +79,7 @@ max_epochs:  3000          # The max number of epochs in Monte Carlo training.
 mc_validation_fraction: 0.1           # The fraction of the data used for validation in Monte Carlo training.
 
 mc_initialiser_settings:               # The initialiser for Monte Carlo training.
-  type: pdf                        # This setting starts with all parameters equal to zero.
+  type: pdf                        # This setting starts with all parameters equal to zero. zeros, normal, uniform
   pdf_set: NNPDF40_nnlo_as_01180
   init_type: uniform
   nsigma: 5
