@@ -43,7 +43,7 @@ t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covari
 # Model specs
 #############
 # defines which PDF flavours are used in the fit
-flavour_mapping: [T3]
+flavour_mapping: [V, V3, V8, T3, T8]
 
   
 
@@ -75,7 +75,7 @@ ns_settings:
 
 # Monte Carlo settings
 use_gen_t0: True                       # Whether the t0 covariance is used to generated pseudodata.
-max_epochs:  10000             # The max number of epochs in Monte Carlo training.
+max_epochs:  3000          # The max number of epochs in Monte Carlo training.
 mc_validation_fraction: 0.1           # The fraction of the data used for validation in Monte Carlo training.
 
 mc_initialiser_settings:               # The initialiser for Monte Carlo training.

@@ -103,9 +103,11 @@ class N3FitPDFModel(PDFModel):
         
             weights = unpack_params(_params, shapes)
 
-            nn_layer = self.n3fit_model.layers[4] #Change (if sum rules [4], if not [3])
-            
-            nn_layer.set_weights(weights)
+            nn_layer = self.n3fit_model.layers[4] # Change (if sum rules [4], if not [3])
+    
+            weights_new = [w+np.random.normal(0, 0.000001, size=w.shape) for w in weights] #Add small noise to avoid numerical issues
+
+            nn_layer.set_weights(weights_new)
             
             model_output = self.n3fit_model(input_dict) 
 
