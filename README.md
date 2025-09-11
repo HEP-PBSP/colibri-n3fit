@@ -19,5 +19,5 @@ pip install -e .
 ```
 
 ```
-example_pdf_model example_pdf_model/runcards/example_pdf_fit.yaml
+example_pdf_model example_pdf_model/runcards/example_pdf_fit_monte_carlo.yaml -r 1
 ```

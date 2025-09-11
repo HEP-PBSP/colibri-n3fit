@@ -5,7 +5,6 @@ example_pdf_model.config.py
 
 import dill
 import logging
-from example_pdf_model.model import ExamplePDFModel
 from example_pdf_model.model import N3FitPDFModel
 
 from colibri.config import Environment, colibriConfig
