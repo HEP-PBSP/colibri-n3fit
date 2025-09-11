@@ -178,7 +178,12 @@ mc_initialiser_settings:               # The initialiser for Monte Carlo trainin
   std_val: 0.1
 
 patience: 1000
-clipnorm: 6.073e-6
+
+optimizer_settings:
+  optimizer: "adam"
+  clipnorm: 1.0
+  optimizer_hyperparams:
+      learning_rate: 5e-4
 
 actions_:
 - run_monte_carlo_fit                    # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
