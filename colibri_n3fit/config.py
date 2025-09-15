@@ -1,16 +1,16 @@
 """
-example_pdf_model.config.py
+colibri_n3fit.config.py
 
 """
 
 import dill
 import logging
-from example_pdf_model.model import N3FitPDFModel
+from colibri_n3fit.model import N3FitPDFModel
 
 from colibri.config import Environment, colibriConfig
 from colibri.constants import FLAVOUR_TO_ID_MAPPING
 
-from example_pdf_model.utils import FLAV_INFO_NNPDF40
+from colibri_n3fit.utils import FLAV_INFO_NNPDF40
 
 log = logging.getLogger(__name__)
 

@@ -1,14 +1,14 @@
 """
-example_pdf_model.app.py
+colibri_n3fit.app.py
 
 """
 
 from colibri.app import colibriApp
-from example_pdf_model.config import ExampleConfig
+from colibri_n3fit.config import ExampleConfig
 
 
 ex_pdf_providers = [
-    "example_pdf_model.model",
+    "colibri_n3fit.model",
 ]
 
 
