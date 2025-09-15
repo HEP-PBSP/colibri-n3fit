@@ -3,7 +3,7 @@ requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.1.0"]
 build-backend = "poetry_dynamic_versioning.backend"
 
 [tool.poetry]
-name = "colibri-n3fit"
+name = "colibri_n3fit"
 version = "0.0.1"
 authors = ["..."]
 description = "Example PDF Model"
@@ -25,4 +25,4 @@ doc = [
 ]
 
 [tool.poetry.scripts]
-colibri-n3fit = "colibri-n3fit.app:main"
+colibri_n3fit = "colibri_n3fit.app:main"

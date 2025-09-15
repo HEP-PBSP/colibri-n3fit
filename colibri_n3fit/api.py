@@ -9,7 +9,7 @@ Example:
 
 Simple Usage:
 
->> from colibri-n3fit.api import API
+>> from colibri_n3fit.api import API
 >> fig = API.plot_pdfs(pdf="NNPDF_nlo_as_0118", Q=100)
 >> fig.show()
 """
@@ -18,8 +18,8 @@ import logging
 
 from reportengine import api
 from colibri.app import colibri_providers
-from colibri-n3fit.app import ex_pdf_providers
-from colibri-n3fit.config import ExampleConfig, Environment
+from colibri_n3fit.app import ex_pdf_providers
+from colibri_n3fit.config import ExampleConfig, Environment
 
 
 log = logging.getLogger(__name__)

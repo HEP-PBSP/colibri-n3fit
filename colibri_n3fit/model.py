@@ -1,5 +1,5 @@
 """
-colibri-n3fit.model.py
+colibri_n3fit.model.py
 
 """
 import jax
@@ -8,7 +8,7 @@ from colibri.pdf_model import PDFModel
 from validphys import convolution
 from n3fit.model_gen import _pdfNN_layer_generator, ReplicaSettings
 import tensorflow as tf
-from colibri-n3fit.utils import FLAV_INFO_NNPDF40
+from colibri_n3fit.utils import FLAV_INFO_NNPDF40
 import numpy as np
 import math
 from jax import lax
