@@ -19,5 +19,5 @@ pip install -e .
 ```
 
 ```
-example_pdf_model example_pdf_model/runcards/example_pdf_fit_monte_carlo.yaml -r 1
+colibri_n3fit colibri_n3fit/runcards/example_pdf_fit_monte_carlo.yaml -r 1
 ```
