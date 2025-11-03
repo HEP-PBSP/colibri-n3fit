@@ -3,10 +3,8 @@ colibri_n3fit.model.py
 
 """
 
-import jax
 import jax.numpy as jnp
 from colibri.pdf_model import PDFModel
-from validphys import convolution
 from n3fit.model_gen import _pdfNN_layer_generator, ReplicaSettings
 import tensorflow as tf
 from colibri_n3fit.utils import FLAV_INFO_NNPDF40
