@@ -32,6 +32,19 @@ class N3FitPDFModel(PDFModel):
             **kwargs: Arguments for n3fit model configuration
                       (nodes, activations, initializer_name, etc.)
         """
+        # Store all constructor arguments for serialization
+        self._init_args = {
+            "flav_info": flav_info,
+            "replica_range_settings": replica_range_settings,
+            "impose_sumrule": impose_sumrule,
+            "fitbasis": fitbasis,
+            "nodes": nodes,
+            "activations": activations,
+            "initializer_name": initializer_name,
+            "layer_type": layer_type,
+            **kwargs,
+        }
+
         self.model_kwargs = kwargs
 
         self.n3fit_model = _pdfNN_layer_generator(
@@ -53,6 +66,19 @@ class N3FitPDFModel(PDFModel):
         ]  # First 16 weights aren't trainable
         self.modifiable_shapes = [w.shape for w in self.n3fit_model.get_weights()[16:]]
         self.total_modifiable_params = sum(np.prod(s) for s in self.modifiable_shapes)
+
+    def __getstate__(self):
+        """
+        Custom Pickle serialization: save initialization arguments.
+
+        Required to reconstruct the n3fit model upon deserialization.
+        """
+        state = {"_init_args": self._init_args}
+        return state
+
+    def __setstate__(self, state):
+        """Custom Pickle deserialization: restore initialization arguments."""
+        self.__init__(**state["_init_args"])
 
     @property
     def n_parameters(self):

@@ -18,7 +18,7 @@ class Environment(Environment):
     pass
 
 
-class ExampleConfig(colibriConfig):
+class ColibriN3fitConfig(colibriConfig):
     """
     GPConfig class Inherits from colibri.config.colibriConfig
     """

@@ -4,7 +4,7 @@ colibri_n3fit.app.py
 """
 
 from colibri.app import colibriApp
-from colibri_n3fit.config import ExampleConfig
+from colibri_n3fit.config import ColibriN3fitConfig
 
 
 ex_pdf_providers = [
@@ -13,7 +13,7 @@ ex_pdf_providers = [
 
 
 class ExPdfApp(colibriApp):
-    config_class = ExampleConfig
+    config_class = ColibriN3fitConfig
 
 
 def main():
