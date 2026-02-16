@@ -18,7 +18,7 @@ import logging
 
 from reportengine import api
 from colibri.app import colibri_providers
-from colibri_n3fit.app import ex_pdf_providers
+from colibri_n3fit.app import colibri_n3fit_providers
 from colibri_n3fit.config import ColibriN3fitConfig, Environment
 
 
@@ -26,4 +26,4 @@ log = logging.getLogger(__name__)
 
 # API needed its own module, so that it can be used with any Matplotlib backend
 # without breaking validphys.app
-API = api.API(ex_pdf_providers + colibri_providers, ColibriN3fitConfig, Environment)
+API = api.API(colibri_n3fit_providers + colibri_providers, ColibriN3fitConfig, Environment)
