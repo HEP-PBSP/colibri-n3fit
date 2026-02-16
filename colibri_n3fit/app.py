@@ -17,7 +17,7 @@ class ExPdfApp(colibriApp):
 
 
 def main():
-    a = ExPdfApp(name="gp", providers=ex_pdf_providers)
+    a = ExPdfApp(name="colibri_n3fit", providers=ex_pdf_providers)
     a.main()
 
 
