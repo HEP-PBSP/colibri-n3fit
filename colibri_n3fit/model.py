@@ -47,6 +47,8 @@ class N3FitPDFModel(PDFModel):
 
         self.model_kwargs = kwargs
 
+        tf.keras.backend.set_floatx("float64")
+
         self.n3fit_model = _pdfNN_layer_generator(
             [
                 ReplicaSettings(nodes=nodes, activations=activations, seed=i)
@@ -95,7 +97,7 @@ class N3FitPDFModel(PDFModel):
         Maintains same input/output structure as n3fit_pdf_grid.
         """
 
-        xgrid_tensor = jnp.array(xgrid)[None, :, None].astype(jnp.float32)
+        xgrid_tensor = jnp.array(xgrid)[None, :, None].astype(jnp.float64)
         xgrid_integration_jax = jnp.array(
             tf.convert_to_tensor(self.n3fit_model.x_in["xgrid_integration"])
         )
