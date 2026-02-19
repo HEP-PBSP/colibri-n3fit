@@ -11,6 +11,11 @@ from colibri_n3fit.utils import FLAV_INFO_NNPDF40
 import numpy as np
 import math
 from jax import lax
+import keras
+import jax
+
+jax.config.update("jax_enable_x64", True)
+jax.config.update("jax_default_matmul_precision", "highest")
 
 
 class N3FitPDFModel(PDFModel):
@@ -47,7 +52,7 @@ class N3FitPDFModel(PDFModel):
 
         self.model_kwargs = kwargs
 
-        tf.keras.backend.set_floatx("float64")
+        keras.backend.set_floatx("float64")
 
         self.n3fit_model = _pdfNN_layer_generator(
             [
