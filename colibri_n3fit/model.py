@@ -22,6 +22,7 @@ class N3FitPDFModel(PDFModel):
 
     def __init__(
         self,
+        replica_index,
         flav_info: list = FLAV_INFO_NNPDF40,
         replica_range_settings: dict = {"min_replica": 1, "max_replica": 1},
         impose_sumrule: bool = True,
@@ -56,7 +57,9 @@ class N3FitPDFModel(PDFModel):
 
         self.n3fit_model = _pdfNN_layer_generator(
             [
-                ReplicaSettings(nodes=nodes, activations=activations, seed=i)
+                ReplicaSettings(
+                    nodes=nodes, activations=activations, seed=replica_index
+                )
                 for i in range(
                     replica_range_settings["min_replica"],
                     replica_range_settings["max_replica"] + 1,
@@ -135,13 +138,8 @@ class N3FitPDFModel(PDFModel):
                 4
             ]  # Change (if sum rules [4], if not [3])
 
-            # Add small noise to avoid numerical issues with zero weights
-            weights_new = [
-                w + np.random.normal(0, 0.000001, size=w.shape) for w in weights
-            ]
-
             # Set the weights of the layer
-            nn_layer.set_weights(weights_new)
+            nn_layer.set_weights(weights)
 
             model_output = self.n3fit_model(input_dict)
 
