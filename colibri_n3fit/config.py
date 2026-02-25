@@ -31,6 +31,7 @@ class ColibriN3fitConfig(colibriConfig):
         Produce the example PDF model.
         """
         model = N3FitPDFModel(
+            self.environment.replica_index,
             flav_info=FLAV_INFO_NNPDF40,
             replica_range_settings={"min_replica": 1, "max_replica": 1},
             impose_sumrule=True,
