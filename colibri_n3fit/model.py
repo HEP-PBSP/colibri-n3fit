@@ -101,10 +101,15 @@ class N3FitPDFModel(PDFModel):
     def param_names(self):
         return [f"w_{i}" for i in range(self.n_parameters)]
 
-    def grid_values_func(self, xgrid):
+    def grid_values_func(self, xgrid, exclude_layers=[]):
         """
         Returns a function that computes the PDF values on xgrid.
         Maintains same input/output structure as n3fit_pdf_grid.
+
+        Args:
+            xgrid: The grid of x values to compute the PDFs on.
+            exclude_layers: List of layer names to exclude from the PDF computation.
+            Used in the NTK studies.
         """
 
         xgrid_tensor = jnp.array(xgrid)[None, :, None].astype(jnp.float64)
@@ -143,7 +148,7 @@ class N3FitPDFModel(PDFModel):
             # Set the weights of the layer
             nn_layer.set_weights(weights)
 
-            model_output = self.n3fit_model(input_dict)
+            model_output = model(input_dict)
 
             pdf_output = jnp.squeeze(model_output, axis=0)
 
