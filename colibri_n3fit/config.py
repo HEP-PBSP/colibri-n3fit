@@ -33,6 +33,7 @@ class ColibriN3fitConfig(colibriConfig):
         model = N3FitPDFModel(
             self.environment.replica_index,
             flav_info=FLAV_INFO_NNPDF40,
+            nnseed=945709987,
             replica_range_settings={"min_replica": 1, "max_replica": 1},
             impose_sumrule=True,
             fitbasis="EVOL",
