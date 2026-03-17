@@ -26,6 +26,7 @@ class ColibriN3fitConfig(colibriConfig):
     def produce_pdf_model(
         self,
         output_path,
+        nnseed,
     ):
         """
         Produce the example PDF model.
@@ -33,7 +34,7 @@ class ColibriN3fitConfig(colibriConfig):
         model = N3FitPDFModel(
             self.environment.replica_index,
             flav_info=FLAV_INFO_NNPDF40,
-            nnseed=945709987,
+            nnseed=nnseed,
             replica_range_settings={"min_replica": 1, "max_replica": 1},
             impose_sumrule=True,
             fitbasis="EVOL",
