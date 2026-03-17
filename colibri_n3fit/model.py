@@ -6,6 +6,7 @@ colibri_n3fit.model.py
 import jax.numpy as jnp
 from colibri.pdf_model import PDFModel
 from n3fit.model_gen import _pdfNN_layer_generator, ReplicaSettings
+from validphys.n3fit_data import replica_nnseed
 import tensorflow as tf
 from colibri_n3fit.utils import FLAV_INFO_NNPDF40
 import numpy as np
@@ -23,6 +24,7 @@ class N3FitPDFModel(PDFModel):
     def __init__(
         self,
         replica_index,
+        nnseed,
         flav_info: list = FLAV_INFO_NNPDF40,
         replica_range_settings: dict = {"min_replica": 1, "max_replica": 1},
         impose_sumrule: bool = True,
@@ -55,11 +57,11 @@ class N3FitPDFModel(PDFModel):
 
         keras.backend.set_floatx("float64")
 
+        nnseed_rep = replica_nnseed(replica_index, nnseed)
+
         self.n3fit_model = _pdfNN_layer_generator(
             [
-                ReplicaSettings(
-                    nodes=nodes, activations=activations, seed=replica_index
-                )
+                ReplicaSettings(nodes=nodes, activations=activations, seed=nnseed_rep)
                 for i in range(
                     replica_range_settings["min_replica"],
                     replica_range_settings["max_replica"] + 1,
