@@ -9,6 +9,7 @@ from colibri_n3fit.config import ColibriN3fitConfig
 
 colibri_n3fit_providers = [
     "colibri_n3fit.model",
+    "colibri_n3fit.param_initialisation",
 ]
 
 
