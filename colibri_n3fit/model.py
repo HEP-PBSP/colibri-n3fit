@@ -6,6 +6,7 @@ colibri_n3fit.model.py
 import jax.numpy as jnp
 from colibri.pdf_model import PDFModel
 from n3fit.model_gen import _pdfNN_layer_generator, ReplicaSettings
+from n3fit.backends.keras_backend.MetaModel import NN_LAYER_ALL_REPLICAS
 from validphys.n3fit_data import replica_nnseed
 import tensorflow as tf
 from colibri_n3fit.utils import FLAV_INFO_NNPDF40
@@ -42,6 +43,7 @@ class N3FitPDFModel(PDFModel):
         """
         # Store all constructor arguments for serialization
         self._init_args = {
+            "nnseed": nnseed,
             "flav_info": flav_info,
             "replica_range_settings": replica_range_settings,
             "impose_sumrule": impose_sumrule,
@@ -132,6 +134,7 @@ class N3FitPDFModel(PDFModel):
                 param = param.reshape(shape)
                 params_list.append(param)
                 pos += size
+
             return params_list
 
         def pdf_func(_params):
@@ -141,9 +144,7 @@ class N3FitPDFModel(PDFModel):
 
             weights = unpack_params(_params, shapes)
 
-            nn_layer = self.n3fit_model.layers[
-                4
-            ]  # Change (if sum rules [4], if not [3])
+            nn_layer = self.n3fit_model.get_layer(NN_LAYER_ALL_REPLICAS)
 
             # Set the weights of the layer
             nn_layer.set_weights(weights)
