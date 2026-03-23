@@ -147,6 +147,17 @@ class N3FitPDFModel(PDFModel):
 
             # Set the weights of the layer
             nn_layer.set_weights(weights)
+            
+            if exclude_layers:
+              for layer in reversed(self.n3fit_model.layers):
+                if layer.name not in exclude_layers:
+                    intermediate_model = layer.output
+                    break
+              from n3fit.backends.keras_backend.MetaModel import MetaModel
+              model = MetaModel(input_tensors=self.n3fit_model.input, output_tensors=intermediate_model)
+            else:
+              model = self.n3fit_model
+            
 
             model_output = model(input_dict)
 
