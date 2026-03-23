@@ -28,9 +28,8 @@ dataset_inputs:
 
 theoryid: 40000000      # The theory from which the predictions are drawn.
 use_cuts: internal      # The kinematic cuts to be applied to the data.
-mcseed: 519562661               
-nnseed: 945709987
-trvlseed: 591866982
+mcseed: 519562661       # Seed used for the production of pseudodata
+
 #####################
 # Loss function specs
 #####################
@@ -39,7 +38,10 @@ positivity:
   posdatasets: []
 
 positivity_penalty_settings:
-  positivity_penalty: False             
+  positivity_penalty: False    
+
+integrability_settings:
+  integrability: False         
 
 use_fit_t0: True                       # Whether the t0 covariance is used in the chi2 loss.
 t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covariance matrix.
@@ -50,9 +52,10 @@ t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covari
 # defines which PDF flavours are used in the fit
 # flavour_mapping: [V, V3, V8, T3, T8, \Sigma, T15, g]
 
-nodes: [25,20,8]
+nodes: [25,20,8]  # The number of nodes in each layer of the neural network. The output should be set to the number of PDF flavours
 activations: [tanh, tanh, linear]
 layer_type: dense
+nnseed: 945709987       # Seed used for the sampling of preprocessing factors
 
 ###################
 # Methodology specs
@@ -61,24 +64,22 @@ layer_type: dense
 # Monte Carlo settings
 use_gen_t0: True                       # Whether the t0 covariance is used to generated pseudodata.
 max_epochs:  10000    # The max number of epochs in Monte Carlo training.
-mc_validation_fraction: 0.25       # The fraction of the data used for validation in Monte Carlo training.
+mc_validation_fraction: 0.25      # The fraction of the data used for validation in Monte Carlo training. 
+                                  # To use a different seed for the splitting of the data into training and validation sets per replica, use the option `--trval_index {seed}`.
 
 param_initialiser_settings:               # The initialiser for Monte Carlo training.
-  type: glorot_norm                   # This setting starts with all parameters equal to zero. zeros, normal, uniform
+  type: glorot_norm 
   random_seed: 42
 
-patience: 1000
+patience: 1000  # The number of epochs to wait for an improvement in the validation loss before stopping the training
 
-positive_pseudodata: False
+positive_pseudodata: False # If set to True, the pseudodata will be resampled until all pseudodata points are positive
 
 optimizer_settings:
   optimizer: "nadam"
-  clipnorm: 6.073e-6
+  clipnorm: 6.073e-6  # The maximum value of the norm of the gradients. This is used to prevent exploding gradients.
   optimizer_hyperparams:
-      learning_rate: 2.621e-3
-
-integrability_settings:
-  integrability: False
+      learning_rate: 2.621e-3 
 
 actions_:
 - run_monte_carlo_fit                    # Choose from ultranest_fit, monte_carlo_fit, analytic_fit
