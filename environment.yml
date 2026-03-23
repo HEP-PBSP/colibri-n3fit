@@ -13,3 +13,6 @@ dependencies:
   - pip
   - pip:
     - -e .
+
+variables:
+  KERAS_BACKEND: jax
