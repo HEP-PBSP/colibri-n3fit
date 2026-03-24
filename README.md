@@ -12,7 +12,6 @@ conda env create -n myenv -f environment.yml
 ```
 
 ## To Run
-Note that this doesn't currently run fully but this is just a rough draft!
 
 ```
 pip install -e .
