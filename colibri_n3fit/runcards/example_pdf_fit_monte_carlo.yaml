@@ -54,7 +54,6 @@ t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covari
 
 nodes: [25,20,8]  # The number of nodes in each layer of the neural network. The output should be set to the number of PDF flavours
 activations: [tanh, tanh, linear]
-layer_type: dense
 nnseed: 945709987       # Seed used for the sampling of preprocessing factors
 
 ###################

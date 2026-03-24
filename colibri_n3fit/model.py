@@ -32,7 +32,6 @@ class N3FitPDFModel(PDFModel):
         nodes: list = [25, 20, 8],
         activations: list = ["tanh", "tanh", "linear"],
         initializer_name: str = "glorot_normal",
-        layer_type: str = "dense",
         **kwargs,
     ):
         """
@@ -49,7 +48,6 @@ class N3FitPDFModel(PDFModel):
             "nodes": nodes,
             "activations": activations,
             "initializer_name": initializer_name,
-            "layer_type": layer_type,
             **kwargs,
         }
 

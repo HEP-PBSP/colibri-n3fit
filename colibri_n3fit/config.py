@@ -30,7 +30,6 @@ class ColibriN3fitConfig(colibriConfig):
         nodes=[25, 20, 8],
         activations=["tanh", "tanh", "linear"],
         initializer_name="glorot_normal",
-        layer_type="dense",
     ):
         """
         Produce the example PDF model.
@@ -45,7 +44,6 @@ class ColibriN3fitConfig(colibriConfig):
             nodes=nodes,
             activations=activations,
             initializer_name=initializer_name,
-            layer_type=layer_type,
         )
         # dump model to output_path using dill
         # this is mainly needed by scripts/ns_resampler.py
