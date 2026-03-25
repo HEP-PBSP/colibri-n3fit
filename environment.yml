@@ -1,4 +1,4 @@
-name: example-colibri-n3fit
+name: colibri-n3fit
 
 channels:
   - conda-forge
