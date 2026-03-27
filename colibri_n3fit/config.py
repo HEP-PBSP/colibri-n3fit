@@ -27,6 +27,9 @@ class ColibriN3fitConfig(colibriConfig):
         self,
         output_path,
         nnseed,
+        nodes=[25, 20, 8],
+        activations=["tanh", "tanh", "linear"],
+        initializer_name="glorot_normal",
     ):
         """
         Produce the example PDF model.
@@ -38,10 +41,9 @@ class ColibriN3fitConfig(colibriConfig):
             replica_range_settings={"min_replica": 1, "max_replica": 1},
             impose_sumrule=True,
             fitbasis="EVOL",
-            nodes=[25, 20, 8],
-            activations=["tanh", "tanh", "linear"],
-            initializer_name="glorot_normal",
-            layer_type="dense",
+            nodes=nodes,
+            activations=activations,
+            initializer_name=initializer_name,
         )
         # dump model to output_path using dill
         # this is mainly needed by scripts/ns_resampler.py
