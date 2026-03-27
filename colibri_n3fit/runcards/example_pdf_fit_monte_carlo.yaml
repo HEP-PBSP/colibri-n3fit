@@ -49,8 +49,6 @@ t0pdfset: NNPDF40_nnlo_as_01180         # The t0 PDF used to build the t0 covari
 #############
 # Model specs
 #############
-# defines which PDF flavours are used in the fit
-# flavour_mapping: [V, V3, V8, T3, T8, \Sigma, T15, g]
 
 nodes: [25,20,8]  # The number of nodes in each layer of the neural network. The output should be set to the number of PDF flavours
 activations: [tanh, tanh, linear]
