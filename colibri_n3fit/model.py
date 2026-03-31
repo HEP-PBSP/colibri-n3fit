@@ -33,7 +33,6 @@ class N3FitPDFModel(PDFModel):
         nodes: list = [25, 20, 8],
         activations: list = ["tanh", "tanh", "linear"],
         initializer_name: str = "glorot_normal",
-        layer_type: str = "dense",
         **kwargs,
     ):
         """
@@ -41,6 +40,10 @@ class N3FitPDFModel(PDFModel):
             **kwargs: Arguments for n3fit model configuration
                       (nodes, activations, initializer_name, etc.)
         """
+        # Add legacy support for old argument names
+        if "layer_type" in kwargs:
+            kwargs["architecture"] = kwargs.pop("layer_type")
+
         # Store all constructor arguments for serialization
         self._init_args = {
             "nnseed": nnseed,
@@ -51,7 +54,6 @@ class N3FitPDFModel(PDFModel):
             "nodes": nodes,
             "activations": activations,
             "initializer_name": initializer_name,
-            "layer_type": layer_type,
             **kwargs,
         }
 
@@ -63,7 +65,10 @@ class N3FitPDFModel(PDFModel):
 
         self.n3fit_model = _pdfNN_layer_generator(
             [
-                ReplicaSettings(nodes=nodes, activations=activations, seed=nnseed_rep)
+                ReplicaSettings(nodes=nodes, 
+                                activations=activations, 
+                                seed=nnseed_rep,
+                                architecture=kwargs.pop("architecture", "dense"))
                 for i in range(
                     replica_range_settings["min_replica"],
                     replica_range_settings["max_replica"] + 1,
@@ -75,9 +80,7 @@ class N3FitPDFModel(PDFModel):
             **kwargs,
         )
         self.x_in = self.n3fit_model.x_in
-        self.static_weights = self.n3fit_model.get_weights()[
-            :16
-        ]  # First 16 weights aren't trainable
+        self.static_weights = self.n3fit_model.get_weights()[:16]  # First 16 weights aren't trainable
         self.modifiable_shapes = [w.shape for w in self.n3fit_model.get_weights()[16:]]
         self.total_modifiable_params = sum(np.prod(s) for s in self.modifiable_shapes)
 
@@ -115,15 +118,14 @@ class N3FitPDFModel(PDFModel):
         """
 
         xgrid_tensor = jnp.array(xgrid)[None, :, None].astype(jnp.float64)
-        xgrid_integration_jax = jnp.array(
-            tf.convert_to_tensor(self.n3fit_model.x_in["xgrid_integration"])
-        )
+        input_dict = {"pdf_input": xgrid_tensor,}
 
-        input_dict = {
-            "pdf_input": xgrid_tensor,
-            "xgrid_integration": xgrid_integration_jax,
-        }
-
+        if "xgrid_integration" in self.n3fit_model.x_in:
+          xgrid_integration_jax = jnp.array(
+              tf.convert_to_tensor(self.n3fit_model.x_in["xgrid_integration"])
+          )
+          input_dict["xgrid_integration"] = xgrid_integration_jax
+        
         def unpack_params(flat_params, shapes):
             """Returns the weight parameters in the format expected by the n3fit model."""
             params_list = []
