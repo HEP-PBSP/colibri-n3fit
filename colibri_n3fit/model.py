@@ -6,7 +6,7 @@ colibri_n3fit.model.py
 import jax.numpy as jnp
 from colibri.pdf_model import PDFModel
 from n3fit.model_gen import _pdfNN_layer_generator, ReplicaSettings
-from n3fit.backends.keras_backend.MetaModel import NN_LAYER_ALL_REPLICAS
+from n3fit.backends.keras_backend.MetaModel import NN_LAYER_ALL_REPLICAS, PREPROCESSING_LAYER_ALL_REPLICAS
 from validphys.n3fit_data import replica_nnseed
 import tensorflow as tf
 from colibri_n3fit.utils import FLAV_INFO_NNPDF40
@@ -106,7 +106,7 @@ class N3FitPDFModel(PDFModel):
     def param_names(self):
         return [f"w_{i}" for i in range(self.n_parameters)]
 
-    def grid_values_func(self, xgrid, exclude_layers=[]):
+    def grid_values_func(self, xgrid, exclude_layers=[], remove_prefactors=False):
         """
         Returns a function that computes the PDF values on xgrid.
         Maintains same input/output structure as n3fit_pdf_grid.
@@ -150,6 +150,11 @@ class N3FitPDFModel(PDFModel):
 
             # Set the weights of the layer
             nn_layer.set_weights(weights)
+
+            if remove_prefactors:
+              preprocessing_layer = self.n3fit_model.get_layer(PREPROCESSING_LAYER_ALL_REPLICAS)
+              preprocessing_weights = jnp.asarray(preprocessing_layer.get_weights())
+              preprocessing_layer.set_weights(jnp.zeros_like(preprocessing_weights))
             
             if exclude_layers:
               for layer in reversed(self.n3fit_model.layers):
