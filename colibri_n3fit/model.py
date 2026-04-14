@@ -6,6 +6,7 @@ colibri_n3fit.model.py
 import jax.numpy as jnp
 from colibri.pdf_model import PDFModel
 from n3fit.model_gen import _pdfNN_layer_generator, ReplicaSettings
+from n3fit.backends.keras_backend.MetaModel import NN_LAYER_ALL_REPLICAS, PREPROCESSING_LAYER_ALL_REPLICAS
 from validphys.n3fit_data import replica_nnseed
 import tensorflow as tf
 from colibri_n3fit.utils import FLAV_INFO_NNPDF40
@@ -39,8 +40,13 @@ class N3FitPDFModel(PDFModel):
             **kwargs: Arguments for n3fit model configuration
                       (nodes, activations, initializer_name, etc.)
         """
+        # Add legacy support for old argument names
+        if "layer_type" in kwargs:
+            kwargs["architecture"] = kwargs.pop("layer_type")
+
         # Store all constructor arguments for serialization
         self._init_args = {
+            "nnseed": nnseed,
             "flav_info": flav_info,
             "replica_range_settings": replica_range_settings,
             "impose_sumrule": impose_sumrule,
@@ -59,7 +65,10 @@ class N3FitPDFModel(PDFModel):
 
         self.n3fit_model = _pdfNN_layer_generator(
             [
-                ReplicaSettings(nodes=nodes, activations=activations, seed=nnseed_rep)
+                ReplicaSettings(nodes=nodes, 
+                                activations=activations, 
+                                seed=nnseed_rep,
+                                architecture=kwargs.pop("architecture", "dense"))
                 for i in range(
                     replica_range_settings["min_replica"],
                     replica_range_settings["max_replica"] + 1,
@@ -71,9 +80,7 @@ class N3FitPDFModel(PDFModel):
             **kwargs,
         )
         self.x_in = self.n3fit_model.x_in
-        self.static_weights = self.n3fit_model.get_weights()[
-            :16
-        ]  # First 16 weights aren't trainable
+        self.static_weights = self.n3fit_model.get_weights()[:16]  # First 16 weights aren't trainable
         self.modifiable_shapes = [w.shape for w in self.n3fit_model.get_weights()[16:]]
         self.total_modifiable_params = sum(np.prod(s) for s in self.modifiable_shapes)
 
@@ -99,22 +106,26 @@ class N3FitPDFModel(PDFModel):
     def param_names(self):
         return [f"w_{i}" for i in range(self.n_parameters)]
 
-    def grid_values_func(self, xgrid):
+    def grid_values_func(self, xgrid, exclude_layers=[], remove_prefactors=False):
         """
         Returns a function that computes the PDF values on xgrid.
         Maintains same input/output structure as n3fit_pdf_grid.
+
+        Args:
+            xgrid: The grid of x values to compute the PDFs on.
+            exclude_layers: List of layer names to exclude from the PDF computation.
+            Used in the NTK studies.
         """
 
         xgrid_tensor = jnp.array(xgrid)[None, :, None].astype(jnp.float64)
-        xgrid_integration_jax = jnp.array(
-            tf.convert_to_tensor(self.n3fit_model.x_in["xgrid_integration"])
-        )
+        input_dict = {"pdf_input": xgrid_tensor,}
 
-        input_dict = {
-            "pdf_input": xgrid_tensor,
-            "xgrid_integration": xgrid_integration_jax,
-        }
-
+        if "xgrid_integration" in self.n3fit_model.x_in:
+          xgrid_integration_jax = jnp.array(
+              tf.convert_to_tensor(self.n3fit_model.x_in["xgrid_integration"])
+          )
+          input_dict["xgrid_integration"] = xgrid_integration_jax
+        
         def unpack_params(flat_params, shapes):
             """Returns the weight parameters in the format expected by the n3fit model."""
             params_list = []
@@ -125,6 +136,7 @@ class N3FitPDFModel(PDFModel):
                 param = param.reshape(shape)
                 params_list.append(param)
                 pos += size
+
             return params_list
 
         def pdf_func(_params):
@@ -134,14 +146,34 @@ class N3FitPDFModel(PDFModel):
 
             weights = unpack_params(_params, shapes)
 
-            nn_layer = self.n3fit_model.layers[
-                4
-            ]  # Change (if sum rules [4], if not [3])
+            nn_layer = self.n3fit_model.get_layer(NN_LAYER_ALL_REPLICAS)
 
             # Set the weights of the layer
             nn_layer.set_weights(weights)
 
-            model_output = self.n3fit_model(input_dict)
+            if remove_prefactors:
+              preprocessing_layer = self.n3fit_model.get_layer(PREPROCESSING_LAYER_ALL_REPLICAS)
+              preprocessing_weights = jnp.asarray(preprocessing_layer.get_weights())
+              new_weights = []
+              for idx, w in enumerate(preprocessing_weights):
+                if idx % 2 == 0: # Small-x values
+                  new_weights.append(jnp.ones_like(w))
+                elif idx % 2 == 1: # Large-x values
+                  new_weights.append(jnp.zeros_like(w))
+              preprocessing_layer.set_weights(new_weights)
+            
+            if exclude_layers:
+              for layer in reversed(self.n3fit_model.layers):
+                if layer.name not in exclude_layers:
+                    intermediate_model = layer.output
+                    break
+              from n3fit.backends.keras_backend.MetaModel import MetaModel
+              model = MetaModel(input_tensors=self.n3fit_model.input, output_tensors=intermediate_model)
+            else:
+              model = self.n3fit_model
+            
+
+            model_output = model(input_dict)
 
             pdf_output = jnp.squeeze(model_output, axis=0)
 
