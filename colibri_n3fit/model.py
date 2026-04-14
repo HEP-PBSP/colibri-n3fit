@@ -154,7 +154,13 @@ class N3FitPDFModel(PDFModel):
             if remove_prefactors:
               preprocessing_layer = self.n3fit_model.get_layer(PREPROCESSING_LAYER_ALL_REPLICAS)
               preprocessing_weights = jnp.asarray(preprocessing_layer.get_weights())
-              preprocessing_layer.set_weights(jnp.zeros_like(preprocessing_weights))
+              new_weights = []
+              for idx, w in enumerate(preprocessing_weights):
+                if idx % 2 == 0: # Small-x values
+                  new_weights.append(jnp.ones_like(w))
+                elif idx % 2 == 1: # Large-x values
+                  new_weights.append(jnp.zeros_like(w))
+              preprocessing_layer.set_weights(new_weights)
             
             if exclude_layers:
               for layer in reversed(self.n3fit_model.layers):
