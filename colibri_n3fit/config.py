@@ -7,18 +7,19 @@ import dill
 import logging
 from colibri_n3fit.model import N3FitPDFModel
 
-from colibri.config import Environment, colibriConfig
+from colibri.config import Environment as ColibriEnvironment, colibriConfig
+from simunet.config import SIMUConfig, SIMUEnvironment
 
 from colibri_n3fit.utils import FLAV_INFO_NNPDF40
 
 log = logging.getLogger(__name__)
 
 
-class Environment(Environment):
+class Environment(SIMUEnvironment, ColibriEnvironment):
     pass
 
 
-class ColibriN3fitConfig(colibriConfig):
+class ColibriN3fitConfig(SIMUConfig, colibriConfig):
     """
     ColibriN3fitConfig class Inherits from colibri.config.colibriConfig
     """

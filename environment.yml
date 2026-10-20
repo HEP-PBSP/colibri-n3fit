@@ -1,10 +1,10 @@
-name: colibri-n3fit
+name: colibri-n3fit-simunet
 
 channels:
   - conda-forge
 
 dependencies:
-  - python >= 3.11
+  - python = 3.12
   - mpich
   - lhapdf
   - pandoc
