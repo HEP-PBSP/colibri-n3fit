@@ -5,8 +5,8 @@ build-backend = "poetry_dynamic_versioning.backend"
 [tool.poetry]
 name = "colibri_n3fit"
 version = "0.0.1"
-authors = ["..."]
-description = "Example PDF Model"
+authors = ["Ella Cole"]
+description = "Example NN PDF Model"
 
 [tool.poetry.dependencies]
 

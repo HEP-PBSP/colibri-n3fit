@@ -7,7 +7,6 @@ import jax.numpy as jnp
 from colibri.pdf_model import PDFModel
 from n3fit.model_gen import _pdfNN_layer_generator, ReplicaSettings
 from validphys.n3fit_data import replica_nnseed
-import tensorflow as tf
 from colibri_n3fit.utils import FLAV_INFO_NNPDF40
 import numpy as np
 import math
@@ -31,23 +30,24 @@ class N3FitPDFModel(PDFModel):
         fitbasis: str = "EVOL",
         nodes: list = [25, 20, 8],
         activations: list = ["tanh", "tanh", "linear"],
-        initializer_name: str = "glorot_normal",
         **kwargs,
     ):
         """
         Args:
+            replica_range_settings: Inclusive range containing exactly one replica.
             **kwargs: Arguments for n3fit model configuration
-                      (nodes, activations, initializer_name, etc.)
+                      (nodes, activations, etc.)
         """
         # Store all constructor arguments for serialization
         self._init_args = {
+            "replica_index": replica_index,
+            "nnseed": nnseed,
             "flav_info": flav_info,
             "replica_range_settings": replica_range_settings,
             "impose_sumrule": impose_sumrule,
             "fitbasis": fitbasis,
             "nodes": nodes,
             "activations": activations,
-            "initializer_name": initializer_name,
             **kwargs,
         }
 
@@ -58,23 +58,19 @@ class N3FitPDFModel(PDFModel):
         nnseed_rep = replica_nnseed(replica_index, nnseed)
 
         self.n3fit_model = _pdfNN_layer_generator(
-            [
-                ReplicaSettings(nodes=nodes, activations=activations, seed=nnseed_rep)
-                for i in range(
-                    replica_range_settings["min_replica"],
-                    replica_range_settings["max_replica"] + 1,
-                )
-            ],
+            [ReplicaSettings(nodes=nodes, activations=activations, seed=nnseed_rep)],
             impose_sumrule=impose_sumrule,
             flav_info=flav_info,
             fitbasis=fitbasis,
             **kwargs,
         )
         self.x_in = self.n3fit_model.x_in
-        self.static_weights = self.n3fit_model.get_weights()[
-            :16
-        ]  # First 16 weights aren't trainable
-        self.modifiable_shapes = [w.shape for w in self.n3fit_model.get_weights()[16:]]
+        self.static_weights = [
+            np.asarray(v) for v in self.n3fit_model.non_trainable_variables
+        ]
+        self.modifiable_shapes = [
+            tuple(v.shape) for v in self.n3fit_model.trainable_variables
+        ]
         self.total_modifiable_params = sum(np.prod(s) for s in self.modifiable_shapes)
 
     def __getstate__(self):
@@ -107,7 +103,7 @@ class N3FitPDFModel(PDFModel):
 
         xgrid_tensor = jnp.array(xgrid)[None, :, None].astype(jnp.float64)
         xgrid_integration_jax = jnp.array(
-            tf.convert_to_tensor(self.n3fit_model.x_in["xgrid_integration"])
+            np.asarray(self.n3fit_model.x_in["xgrid_integration"])
         )
 
         input_dict = {
@@ -127,21 +123,17 @@ class N3FitPDFModel(PDFModel):
                 pos += size
             return params_list
 
+        shapes = [tuple(v.shape) for v in self.n3fit_model.trainable_variables]
+        non_trainable = [
+            jnp.asarray(v) for v in self.n3fit_model.non_trainable_variables
+        ]
+
         def pdf_func(_params):
-
-            # Retrive the shapes of the trainable variables
-            shapes = [v.shape for v in self.n3fit_model.trainable_variables]
-
             weights = unpack_params(_params, shapes)
 
-            nn_layer = self.n3fit_model.layers[
-                4
-            ]  # Change (if sum rules [4], if not [3])
-
-            # Set the weights of the layer
-            nn_layer.set_weights(weights)
-
-            model_output = self.n3fit_model(input_dict)
+            model_output, _ = self.n3fit_model.stateless_call(
+                weights, non_trainable, input_dict, training=False
+            )
 
             pdf_output = jnp.squeeze(model_output, axis=0)
 
