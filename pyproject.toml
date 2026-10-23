@@ -13,6 +13,9 @@ description = "Example NN PDF Model"
 # colibri needs to be installed from git
 colibri = { git = "https://github.com/HEP-PBSP/colibri" }
 
+# Use the local SIMUnet checkout containing the shared SMEFT helpers.
+simunet = { path = "../../codes/simunet/simunet_nnpdf", develop = true }
+
 [tool.poetry.extras]
 test = [
     "pytest",
