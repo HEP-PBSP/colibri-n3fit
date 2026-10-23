@@ -29,7 +29,6 @@ class ColibriN3fitConfig(colibriConfig):
         nnseed,
         nodes=[25, 20, 8],
         activations=["tanh", "tanh", "linear"],
-        initializer_name="glorot_normal",
     ):
         """
         Produce the example PDF model.
@@ -43,7 +42,6 @@ class ColibriN3fitConfig(colibriConfig):
             fitbasis="EVOL",
             nodes=nodes,
             activations=activations,
-            initializer_name=initializer_name,
         )
         # dump model to output_path using dill
         # this is mainly needed by scripts/ns_resampler.py
